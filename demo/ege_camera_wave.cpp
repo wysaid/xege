@@ -1,23 +1,40 @@
-// By wysaid
-// blog: http://wysaid.org
-// dependency: Easy Graphics Engine: https://github.com/misakamm/xege/ or http://xege.org
-// tips: 本次demo兼容vc6.0, 直接复制下方代码运行即可
+/**
+ * @file ege_camera.cpp
+ * @author wysaid (this@xege.org)
+ * @brief 一个使用 ege 内置的相机模块打开相机的例子
+ * @date 2025-05-18
+ *
+ */
 
-#define SHOW_CONSOLE
-#define _CRT_SECURE_NO_WARNINGS
-#include <graphics.h>
-#include <vector>
-#include <cmath>
-#include <cassert>
-#include <cstdio>
+#define SHOW_CONSOLE 1
 
-#define PRINT_FPS 0
-
-#if PRINT_FPS
-#include <chrono>
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
-using namespace std;
+#include <cstdio>
+
+#include <graphics.h>
+#include <ege/camera.h>
+
+#include <vector>
+#include <string>
+#include <cassert>
+
+// 判断一下 C++ 版本, 低于 C++11 的编译器不支持
+#if __cplusplus < 201103L
+#pragma message("C++11 or higher is required.")
+
+int main()
+{
+    return 0;
+}
+#else
+
+#define WINDOW_WIDTH  1280
+#define WINDOW_HEIGHT 720
+
+/// 结合水波荡漾的 Demo, 给一个相机的版本
 
 struct Point
 {
@@ -63,9 +80,10 @@ public:
 
     void setTextureImage(PIMAGE texture)
     {
-        m_texture   = texture;
-        m_texWidth  = getwidth(texture);
-        m_texHeight = getheight(texture);
+        m_texture     = texture;
+        m_texWidth    = getwidth(texture);
+        m_texHeight   = getheight(texture);
+        m_textureData = (color_t*)getbuffer(m_texture);
     }
 
     void setOutputTarget(PIMAGE target)
@@ -75,20 +93,20 @@ public:
         m_outputHeight = getheight(target);
     }
 
+    // 网格的分辨率 w x h
     bool initNet(int w, int h, PIMAGE inputTexture, PIMAGE outputTarget)
     {
         if (w < 2 || h < 2) {
             return false;
         }
 
-        m_texture     = inputTexture;
-        m_texWidth    = getwidth(m_texture);
-        m_texHeight   = getheight(m_texture);
-        m_textureData = (color_t*)getbuffer(m_texture);
+        if (inputTexture) {
+            setTextureImage(inputTexture);
+        }
 
-        m_outputTarget = outputTarget;
-        m_outputWidth  = getwidth(m_outputTarget);
-        m_outputHeight = getheight(m_outputTarget);
+        if (outputTarget) {
+            setOutputTarget(outputTarget);
+        }
 
         m_width  = w;
         m_height = h;
@@ -386,12 +404,12 @@ public:
     float getIntensity() { return m_intensity; }
 
 private:
-    vector<Point> m_vec[2];
-    vector<Point> m_pointCache;
-    int           m_index;
-    int           m_width, m_height;
-    float         m_intensity;
-    int           m_lastIndex;
+    std::vector<Point> m_vec[2];
+    std::vector<Point> m_pointCache;
+    int                m_index;
+    int                m_width, m_height;
+    float              m_intensity;
+    int                m_lastIndex;
 
     PIMAGE   m_texture;
     int      m_texWidth, m_texHeight;
@@ -401,88 +419,93 @@ private:
     int    m_outputWidth, m_outputHeight;
 };
 
-bool readFileNameDlg(LPSTR filename, LPCSTR title)
+int main()
 {
-    OPENFILENAMEA ofna;
-    *filename = 0;
-    memset(&ofna, 0, sizeof(OPENFILENAMEA));
-    ofna.lStructSize = sizeof(OPENFILENAMEA);
-    ofna.hwndOwner   = getHWnd();
-    ofna.hInstance   = getHInstance();
-    ofna.lpstrFilter = "Image Files(*.jpg;*.png;*.bmp;*.gif)\0*.jpg;*.jpeg;*.png;*.bmp;*.gif\0All Files(*.*)\0*.*\0\0";
-    ofna.nMaxFile    = MAX_PATH;
-    ofna.lpstrDefExt = "jpg";
-    ofna.lpstrFile   = filename;
-    ofna.lpstrTitle  = title;
-    ofna.Flags       = OFN_HIDEREADONLY | OFN_CREATEPROMPT;
-    return !!GetOpenFileNameA(&ofna);
-}
+    const char* showMsgRule = "Drag to deform mesh. Intensity: %g";
+    const char* infoMsg     = "Press '+' or '-' to adjust elasticity. By wysaid: http://xege.org";
+    const char* titleMsg    = "EGE camera wave By wysaid - 2025";
 
-PIMAGE loadTexture(const char* filename)
-{
-    char   buffer[1024] = {0};
-    PIMAGE pimg         = NULL;
-
-    if (filename != NULL && *filename != '\0') {
-        strcpy(buffer, filename);
-    }
-
-    setcolor(RED);
-    outtextxy(100, 100, "按任意键选择一张图片才能进入下一步");
-
-    do {
-        getch();
-
-        if (*buffer == '\0') {
-            readFileNameDlg(buffer, "Please choose an image file!");
-        }
-
-        if (*buffer != '\0') {
-            pimg    = newimage();
-            int ret = getimage(pimg, buffer);
-            if (ret != 0) {
-                delimage(pimg);
-                pimg = NULL;
-            }
-        }
-    } while (pimg == NULL);
-
-    return pimg;
-}
-
-int main(int argv, char** argc)
-{
-    const char* showMsgRule = "使用鼠标拖动可变换网格. 当前网格强度：%g";
-    const char* infoMsg = "按'+'或者'-'可以增大或者减小网格弹力！这个版本由wysaid制作， 参见: http://blog.wysaid.org";
-    const char* titleMsg = "EGE网格 By wysaid - 2024";
-
-    initgraph(800, 600, INIT_RENDERMANUAL);
+    /// 在相机的高吞吐场景下, 不设置 RENDERMANUAL 会出现闪屏.
+    initgraph(WINDOW_WIDTH, WINDOW_HEIGHT, INIT_RENDERMANUAL);
     setcaption(titleMsg);
 
-    Net    net;
-    char   buffer[1024];
-    PIMAGE pimg   = loadTexture(argv > 1 ? argc[1] : NULL);
-    PIMAGE target = newimage(getwidth(), getheight());
+    Net         net;
+    ege::Camera camera;
+    PIMAGE      target = newimage(getwidth(), getheight());
+    char        msgBuffer[1024];
 
+    setbkmode(TRANSPARENT);
     setcolor(YELLOW, target);
-    sprintf(buffer, showMsgRule, net.getIntensity());
-    net.initNet(80, 60, pimg, target);
+    sprintf(msgBuffer, showMsgRule, net.getIntensity());
 
-#if PRINT_FPS
-    std::chrono::high_resolution_clock::time_point lastTime = std::chrono::high_resolution_clock::now();
-    int                                            frames   = 0;
-#endif
+    net.initNet(80, 60, nullptr, target);
 
-    for (; is_run(); delay_fps(60)) {
+    // 0: 不输出日志, 1: 输出警告日志, 2: 输出常规信息, 3: 输出调试信息, 超过 3 等同于 3.
+    ege::enableCameraModuleLog(2);
+
+    { /// 打印一下所有相机设备的名称
+        std::vector<std::string> cameraNames = camera.findDeviceNames();
+
+        if (cameraNames.empty()) {
+            fputs("No camera device found!!", stderr);
+            return -1;
+        }
+
+        for (const auto& name : cameraNames) {
+            printf("Camera device: %s\n", name.c_str());
+        }
+    }
+
+    { /// 设置一下相机分辨率
+        camera.setFrameSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        camera.setFrameRate(30);
+    }
+
+    // 这里打开第一个相机设备
+    if (!camera.open(0)) {
+        fputs("Failed to open camera device!!", stderr);
+        return -1;
+    }
+
+    camera.start();
+    CameraFrame* frame = nullptr;
+
+    { // 尝试获取一帧数据, 最多等五秒, 如果失败, 直接退出.
+        frame = camera.grabFrame(5000);
+
+        if (!frame) {
+            fputs("Failed to grab frame!!", stderr);
+            camera.close();
+            return -1;
+        }
+
+        net.setTextureImage(frame->getImage());
+    }
+
+    for (; camera.isStarted() && is_run(); delay_fps(60)) {
         cleardevice();
+
+        // 0 表示不等待, 直接返回, 要处理一下返回值为 nullptr 的情况.
+        auto* newFrame = camera.grabFrame(0);
+        if (newFrame) {
+            if (frame) {
+                frame->release();
+            }
+            frame = newFrame;
+            net.setTextureImage(frame->getImage());
+        }
+
+        if (!frame) {
+            fputs("Failed to grab frame!!", stderr);
+            break;
+        }
 
         if (keystate(key_mouse_l)) {
             int x, y;
             mousepos(&x, &y);
-            net.catchPoint(x / 800.0f, y / 600.0f);
+            net.catchPoint(x / (float)WINDOW_WIDTH, y / (float)WINDOW_HEIGHT);
         } else {
             net.releasePoint();
-            //flushmouse();
         }
 
         if (kbhit()) {
@@ -497,7 +520,7 @@ int main(int argv, char** argc)
                 exit(0);
             }
             flushkey();
-            sprintf(buffer, showMsgRule, net.getIntensity());
+            sprintf(msgBuffer, showMsgRule, net.getIntensity());
         }
 
         net.drawNet();
@@ -505,23 +528,14 @@ int main(int argv, char** argc)
         putimage(0, 0, target);
         setcolor(0x00ff0000);
         outtextxy(10, 10, infoMsg);
-        outtextxy(10, 30, buffer);
-
-#if PRINT_FPS
-
-        ++frames;
-        std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
-        auto                                           dur         = (currentTime - lastTime).count() / 1.e6;
-        if (dur >= 1000) {
-            lastTime = currentTime;
-            printf("FPS: %d\n", frames);
-            frames = 0;
-        }
-#endif
+        outtextxy(10, 30, msgBuffer);
     }
 
-    delimage(pimg);
-    delimage(target);
+    fputs("Camera device closed!!", stderr);
+    camera.close();
     closegraph();
+
     return 0;
 }
+
+#endif

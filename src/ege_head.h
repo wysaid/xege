@@ -20,7 +20,9 @@
 #endif
 
 #define EGE_GRAPH_LIB_BUILD
+#ifndef EGE_DEPRECATE
 #define EGE_DEPRECATE(function, msg)
+#endif
 
 #include "../include/ege.h"
 #include "../include/ege/types.h"
