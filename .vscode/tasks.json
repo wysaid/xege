@@ -17,7 +17,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "group": "build",
-            "problemMatcher": "$gcc"
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "Reload CMake Project",
@@ -33,7 +33,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "group": "build",
-            "problemMatcher": "$gcc"
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "Cleanup CMake Project",
@@ -48,7 +48,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "group": "build",
-            "problemMatcher": "$gcc"
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "Build XEGE Library",
@@ -64,7 +64,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "group": "build",
-            "problemMatcher": "$gcc"
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "Build Demos",
@@ -82,7 +82,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "group": "build",
-            "problemMatcher": "$gcc"
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "Load And Build XEGE Library",
@@ -99,7 +99,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "group": "build",
-            "problemMatcher": "$gcc"
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "Load And Build Demos",
@@ -118,7 +118,7 @@
                 "cwd": "${workspaceFolder}"
             },
             "group": "build",
-            "problemMatcher": "$gcc"
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "Run Demo - XEGE Test",
@@ -138,7 +138,20 @@
                 "cwd": "${workspaceFolder}"
             },
             "group": "build",
-            "problemMatcher": "$gcc"
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Run Camera Demo",
+            "type": "shell",
+            "command": "./ege_camera_wave.exe",
+            "options": {
+                "cwd": "${workspaceFolder}/build/demo/Debug"
+            },
+            "group": "build",
+            "problemMatcher": "$msCompile",
+            "dependsOn": [
+                "Build Demos"
+            ]
         }
     ]
 }
