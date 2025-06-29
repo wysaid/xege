@@ -255,13 +255,15 @@ enum graphics_errors
     grInvalidFontNum     = -14,         ///< Invalid font number
     grInvalidVersion     = -18,         ///< Version incompatible
 
-    grException          = 0x10,        ///< EGE exception
-    grParamError         = 0x11,        ///< Parameter error
-    grInvalidRegion      = 0x12,        ///< Invalid region
-    grOutOfMemory        = 0x13,        ///< Out of memory
-    grNullPointer        = 0x14,        ///< Null pointer
-    grAllocError         = 0x15,        ///< Allocation error
-    grInvalidMemory      = 0xCDCDCDCD   ///< Invalid memory
+    grException          = 16,          ///< EGE exception
+    grParamError         = 17,          ///< Parameter error
+    grInvalidRegion      = 18,          ///< Invalid region
+    grOutOfMemory        = 19,          ///< Out of memory
+    grNullPointer        = 20,          ///< Null pointer
+    grAllocError         = 21,          ///< Allocation error
+    grInvalidFileFormat  = 22,          ///< Invalid file format
+    grUnsupportedFormat  = 23,          ///< Unsupported format
+    grInvalidMemory      = 0xCDCDCDCD   ///< Invalid memory(-842150451)
 };
 
 /**
